@@ -44,20 +44,65 @@ class Company {
     return company;
   }
 
-  /** Find all companies.
+  /** Find all companies (can filter on parameters).
+   *
+   * searchFilters (all optional):
+   * - minEmployees
+   * - maxEmployees
+   * - name (will find case-insensitive, partial matches)
    *
    * Returns [{ handle, name, description, numEmployees, logoUrl }, ...]
    * */
 
-  static async findAll() {
-    const companiesRes = await db.query(
+  static async findAll(searchFilters = {}) {
+    // Start building SQL query.
+    let query = 
           `SELECT handle,
                   name,
                   description,
                   num_employees AS "numEmployees",
                   logo_url AS "logoUrl"
-           FROM companies
-           ORDER BY name`);
+           FROM companies`;
+
+    let whereExpressions = []; 
+    let queryValues = [];
+
+    // Destructure searchFilters object.
+    const { minEmployees, maxEmployees, name } = searchFilters;
+
+    // Check that min Employees isn't greater than maxEmployees.
+    if (minEmployees > maxEmployees) {
+      throw new BadRequestError('Min employees cannot be greater than max');
+    }
+
+    // Check for minEmployees filter and add to query.
+    if (minEmployees !== undefined) {
+      queryValues.push(minEmployees);
+      whereExpressions.push(`num_employees >= $${queryValues.length}`);
+    }
+
+    // Check for maxEmployees filter and add to query.
+    if (maxEmployees !== undefined) {
+      queryValues.push(maxEmployees);
+      whereExpressions.push(`num_employees <= $${queryValues.length}`);
+    }
+
+    // Check for name filter and add to query.
+    if (name) {
+      queryValues.push(`%${name}%`);
+      whereExpressions.push(`name ILIKE $${queryValues.length}`);
+    }
+
+    // Add the WHERE clause to the query string.
+    if (whereExpressions.length > 0) {
+      query += " WHERE " + whereExpressions.join(" AND ");
+    }
+
+    // Order results by name.
+    query += " ORDER BY name";
+
+    // Execute the query and return the rows. 
+    const companiesRes = await db.query(query, queryValues);
     return companiesRes.rows;
   }
 

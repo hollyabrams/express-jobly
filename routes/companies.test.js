@@ -96,6 +96,40 @@ describe("GET /companies", function () {
     });
   });
 
+  test("works: filtering", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ minEmployees: 3 });
+    expect(resp.body).toEqual({
+      companies: [
+        {
+          handle: "c3",
+          name: "C3",
+          description: "Desc3",
+          numEmployees: 3,
+          logoUrl: "http://c3.img",
+        },
+      ],
+    });
+  });
+
+  test("works: filtering on all filters", async function () {
+    const resp = await request(app)
+        .get("/companies")
+        .query({ minEmployees: 2, maxEmployees: 3, name: "3" });
+    expect(resp.body).toEqual({
+      companies: [
+        {
+          handle: "c3",
+          name: "C3",
+          description: "Desc3",
+          numEmployees: 3,
+          logoUrl: "http://c3.img",
+        },
+      ],
+    });
+  });
+
   test("fails: test next() handler", async function () {
     // there's no normal failure event which will cause this route to fail ---
     // thus making it hard to test that the error-handler works with it. This
