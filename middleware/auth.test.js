@@ -5,6 +5,8 @@ const { UnauthorizedError } = require("../expressError");
 const {
   authenticateJWT,
   ensureLoggedIn,
+  ensureAdmin,
+  ensureCorrectUserOrAdmin,
 } = require("./auth");
 
 
@@ -76,5 +78,93 @@ describe("ensureLoggedIn", function () {
       expect(err instanceof UnauthorizedError).toBeTruthy();
     };
     ensureLoggedIn(req, res, next);
+  });
+});
+
+
+describe("ensureAdmin", function () {
+  test("works", function () {
+    expect.assertions(1);
+    // Create a mock request object.
+    const req = {};
+    // Create a mock response object with a user object that has an isAdmin property = true.
+    const res = { locals: { user: { username: "test", isAdmin: true } } };
+    // Create a mock 'next' function that expects an error to be falsy.
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+    // Call the middleware function with the mock objects.
+    ensureAdmin(req, res, next);
+  });
+
+  test("unauth if not admin", function () {
+    expect.assertions(1);
+    const req = {};
+    // Create a mock response object with a user object that has an isAdmin property = false.
+    const res = { locals: { user: { username: "test", isAdmin: false } } };
+    // Create a mock 'next' function that expects UnauthorizedError = truthy.
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    ensureAdmin(req, res, next);
+  });
+
+  test("unauth if anon", function () {
+    expect.assertions(1);
+    const req = {};
+    // Create a mock response object without a user object.
+    const res = { locals: {} };
+    // Create a mock 'next' function that expects UnauthorizedError = truthy.
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    ensureAdmin(req, res, next);
+  });
+});
+
+
+describe("ensureCorrectUserOrAdmin", function () {
+  // test the case where the user is an admin.
+  test("works: admin", function () {
+    expect.assertions(1);
+    const req = { params: { username: "test" } };
+    const res = { locals: { user: { username: "admin", isAdmin: true } } };
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+    ensureCorrectUserOrAdmin(req, res, next);
+  });
+
+  // test the case where the user is the same as the requested user
+  test("works: same user", function () {
+    expect.assertions(1);
+    const req = { params: { username: "test" } };
+    const res = { locals: { user: { username: "test", isAdmin: false } } };
+    const next = function (err) {
+      expect(err).toBeFalsy();
+    };
+    ensureCorrectUserOrAdmin(req, res, next);
+  });
+
+  // test the case where the user is not the same as the requested user and is not an admin
+  test("unauth: mismatch", function () {
+    expect.assertions(1);
+    const req = { params: { username: "wrong" } };
+    const res = { locals: { user: { username: "test", isAdmin: false } } };
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    ensureCorrectUserOrAdmin(req, res, next);
+  });
+
+  // test the case where the user is anonymous
+  test("unauth: if anon", function () {
+    expect.assertions(1);
+    const req = { params: { username: "test" } };
+    const res = { locals: {} };
+    const next = function (err) {
+      expect(err instanceof UnauthorizedError).toBeTruthy();
+    };
+    ensureCorrectUserOrAdmin(req, res, next);
   });
 });
