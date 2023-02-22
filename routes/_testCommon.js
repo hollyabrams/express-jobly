@@ -71,7 +71,7 @@ async function commonBeforeAll() {
     isAdmin: false,
   });
 
-  // await User.applyToJob("u1", testJobIds[0]);
+  await User.applyToJob("u1", testJobIds[0]);
 }
 
 async function commonBeforeEach() {
