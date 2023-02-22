@@ -269,7 +269,7 @@ describe("DELETE /jobs/:id", function () {
     const resp = await request(app)
         .delete(`/jobs/${testJobIds[0]}`)
         .set("authorization", `Bearer ${adminToken}`);
-    expect(resp.body).toEqual({ deleted: testJobIds[0] });
+    expect(resp.body).toEqual({ deleted: testJobIds[0].toString() });
   });
 
   test("unauth for others", async function () {
