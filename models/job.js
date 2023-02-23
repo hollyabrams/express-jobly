@@ -5,7 +5,11 @@ const { NotFoundError} = require("../expressError");
 const { sqlForPartialUpdate } = require("../helpers/sql");
 
 
-/** Related functions for companies. */
+/** Related functions for jobs. */
+
+/** RESEARCH: Using NUMERIC field type provides greater accuracy when working with monetary values. 
+* The pg library will return a string which can then be parsed to a number or decimal type.
+*/
 
 class Job {
   /** Create a job (from data), update db, return new job data.
